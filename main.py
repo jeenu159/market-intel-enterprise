@@ -24,9 +24,21 @@ DATABASE_URI = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:5432/{DB_NAME}"
 
 def fetch_news():
     api_key = os.getenv("NEWS_API_KEY")
-    url = f"https://newsapi.org/v2/everything?q=(technology OR business OR health)&pageSize=50&apiKey={api_key}"
+    # Base URL (No parameters yet)
+    base_url = "https://newsapi.org/v2/everything"
+    
+    # Parameters in a dictionary (Safe & Clean)
+    params = {
+        "q": "technology OR business OR health",
+        "pageSize": 50,
+        "apiKey": api_key,
+        "language": "en",  # Good practice to specify language
+        "sortBy": "publishedAt"
+    }
+    
     try:
-        response = requests.get(url)
+        # requests.get handles the ? and & and spaces automatically here
+        response = requests.get(base_url, params=params)
         data = response.json()
         articles = data.get('articles', [])
         logging.info(f"Successfully fetched {len(articles)} articles.")
