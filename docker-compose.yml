@@ -1,0 +1,61 @@
+
+services:
+  # -----------------------------
+  # 1. The Database (Postgres)
+  # -----------------------------
+  db:
+    image: postgres:15-alpine
+    container_name: market_db
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: market_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d market_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # -----------------------------
+  # 2. The Brain (Inference Service)
+  # -----------------------------
+  inference:
+    build: 
+      context: ./services/inference
+      dockerfile: Dockerfile
+    container_name: market_inference
+    ports:
+      - "8001:8001"
+    volumes:
+      # Mount the models folder so we can update the .pkl without rebuilding
+      - ./services/inference/models:/app/models
+
+  # -----------------------------
+  # 3. The Worker (Ingestion Service)
+  # -----------------------------
+  ingestion:
+    build: 
+      context: ./services/ingestion
+      dockerfile: Dockerfile
+    container_name: market_ingestion
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      inference:
+        condition: service_started
+    environment:
+      # Internal Docker Network URLs
+      DATABASE_URL: postgresql://user:password@db:5432/market_db
+      INFERENCE_URL: http://inference:8001/predict
+      # Load API Key from your local computer's .env file
+      NEWS_API_KEY: ${NEWS_API_KEY}
+
+volumes:
+  postgres_data:

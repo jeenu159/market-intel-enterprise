@@ -1,6 +1,24 @@
+# Security (NEVER commit these)
 .env
+.DS_Store
+
+# Python Cache
 __pycache__/
-pipeline.log
-*.pem
-training_data.csv
-!*.pkl
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+venv/
+env/
+.venv/
+
+# IDE settings
+.vscode/
+.idea/
+
+# Docker
+postgres_data/
+
+# Large Model Files (Too big for standard Git)
+# We will back these up separately or use Git LFS later
+*.pkl
